@@ -21,3 +21,4 @@ misaki-rs = "0.3.0"
 ort = { version = "2.0.0-rc.9", features = ["ndarray"] }
 ndarray = "0.15"
 anyhow = "1.0"
+shh = "1.0.1"

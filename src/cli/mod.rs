@@ -63,6 +63,10 @@ pub struct SpeakArgs {
 
     #[arg(short, long, default_value = "output.wav")]
     pub out: String,
+
+    /// Show verbose output (includes native hardware execution warnings)
+    #[arg(long, default_value_t = false)]
+    pub verbose: bool,
 }
 
 #[derive(Args, Debug)]
@@ -190,12 +194,12 @@ pub fn handle_speak(args: &SpeakArgs) -> Result<(), String> {
     println!("\x1b[34mInitializing TTS with model from {:?}...\x1b[0m", dir);
     
     // Wire up the new TTS Engine
-    let mut engine = crate::tts::KokoroEngine::new(&dir)
+    let mut engine = crate::tts::KokoroEngine::new(&dir, args.verbose)
         .map_err(|e| format!("Failed to initialize TTS engine: {}", e))?;
 
     println!("\x1b[34mGenerating audio for voice ID {}...\x1b[0m", args.voice);
     
-    let audio_samples = engine.generate_audio(&args.text, args.voice, args.speed)
+    let audio_samples = engine.generate_audio(&args.text, args.voice, args.speed, args.verbose)
         .map_err(|e| format!("Failed to generate audio: {}", e))?;
 
     // Create a valid WAV file using `hound`

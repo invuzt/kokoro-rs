@@ -518,6 +518,7 @@ dependencies = [
  "ort",
  "serde",
  "serde_json",
+ "shh",
 ]
 
 [[package]]
@@ -1095,6 +1096,16 @@ dependencies = [
  "serde",
  "serde_core",
  "zmij",
+]
+
+[[package]]
+name = "shh"
+version = "1.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5205eb079ac8be8ec77b7470aff4a050610d42c32819deee362ca414c926d3ab"
+dependencies = [
+ "libc",
+ "winapi",
 ]
 
 [[package]]

@@ -20,7 +20,7 @@ pub struct KokoroEngine {
 impl KokoroEngine {
     /// Initializes the TTS Engine by loading the Kokoro ONNX model
     /// and the Misaki G2P phonetic dictionaries.
-    pub fn new(model_dir: &Path) -> Result<Self> {
+    pub fn new(model_dir: &Path, verbose: bool) -> Result<Self> {
         let model_path = model_dir.join("model.onnx");
         let voices_bin_path = model_dir.join("voices.bin");
         let tokens_path = model_dir.join("tokens.txt");
@@ -51,9 +51,13 @@ impl KokoroEngine {
                 .map_err(|e| anyhow::anyhow!("Failed to register CoreML: {:?}", e))?;
         }
 
-        let onnx_session = builder
-            .commit_from_file(&model_path)
-            .map_err(|e| anyhow::anyhow!("Failed to load model.onnx: {:?}", e))?;
+        let onnx_session = {
+            // Silence stderr from C libraries (like CoreML CoreAnalytics leaks) unless verbose
+            let _silencer = if !verbose { shh::stderr().ok() } else { None };
+            builder
+                .commit_from_file(&model_path)
+                .map_err(|e| anyhow::anyhow!("Failed to load model.onnx: {:?}", e))?
+        };
 
         Ok(Self {
             onnx_session,
@@ -64,7 +68,7 @@ impl KokoroEngine {
     }
 
     /// Generates raw float32 audio samples from input text.
-    pub fn generate_audio(&mut self, text: &str, voice_id: u32, speed: f32) -> Result<Vec<f32>> {
+    pub fn generate_audio(&mut self, text: &str, voice_id: u32, speed: f32, verbose: bool) -> Result<Vec<f32>> {
         // STEP 1: Convert text to phonemes using Misaki
         let (phonemes, _) = self.g2p.g2p(text).map_err(|e| anyhow::anyhow!("G2P error: {:?}", e))?;
         println!("  -> [Misaki-rs] Phonemes: {}", phonemes);
@@ -118,11 +122,15 @@ impl KokoroEngine {
 
         // STEP 5: Execute the ONNX Graph
         println!("  -> [Ort] Executing ONNX Graph...");
-        let outputs = self.onnx_session.run(ort::inputs![
-            "tokens" => tokens_tensor,
-            "style" => style_tensor,
-            "speed" => speed_tensor,
-        ])?;
+        
+        let outputs = {
+            let _silencer = if !verbose { shh::stderr().ok() } else { None };
+            self.onnx_session.run(ort::inputs![
+                "tokens" => tokens_tensor,
+                "style" => style_tensor,
+                "speed" => speed_tensor,
+            ])?
+        };
 
         // STEP 6: Extract the audio float array
         let audio_tensor = outputs["audio"].try_extract_tensor::<f32>()?;
