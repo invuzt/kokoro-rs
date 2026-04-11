@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "server",
+  "dolt_database": "kokoro_rs",
+  "project_id": "adf914cb-aba1-4225-ba10-a6a21815157d"
+}
