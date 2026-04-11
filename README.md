@@ -29,7 +29,7 @@ cargo build --release
 
 ### Generate speech (`speak`)
 
-*(Note: Currently a structural scaffold. Full `ort` + `misaki-rs` ONNX inference logic to be implemented here).*
+Generate audio from a given text string using the Kokoro 1.0 model. This uses the native `ort` ONNX runtime and `misaki-rs` for phonetic parity.
 
 ```bash
 ./target/release/kokoro-cli speak "Hello, world! This is a test of the CLI." --voice 0 --out test.wav

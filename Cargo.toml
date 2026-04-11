@@ -3,6 +3,9 @@ name = "kokoro-cli"
 version = "0.1.0"
 edition = "2021"
 description = "A native Rust CLI for Kokoro TTS using XDG standards and agent-first design"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/ghchinoy/kokoro-rs"
+readme = "README.md"
 
 [dependencies]
 clap = { version = "4.4", features = ["derive", "env"] }

@@ -1,6 +1,6 @@
 # Releasing to crates.io
 
-This guide explains how to publish the `kokoro` CLI crate to `crates.io`, the official Rust package registry. This makes it easy for other Rust developers and users to install your CLI globally using `cargo install kokoro`.
+This guide explains how to publish the `kokoro-cli` CLI crate to `crates.io`, the official Rust package registry. This makes it easy for other Rust developers and users to install your CLI globally using `cargo install kokoro-cli`.
 
 ## 1. Prerequisites
 
@@ -79,9 +79,9 @@ cargo publish
 After publishing, anyone can install your CLI globally on their system using:
 
 ```bash
-cargo install kokoro
+cargo install kokoro-cli
 ```
-*(If you named the package `kokoro-cli` in Cargo.toml, the command would be `cargo install kokoro-cli`, but it can still install a binary named `kokoro`).*
+*(Note: The binary installed will be named `kokoro-cli` unless explicitly renamed in Cargo.toml).*
 
 ## Post-Release: Yanking a Version (Emergency Only)
 
@@ -93,4 +93,5 @@ cargo yank --vers 0.1.0
 To undo a yank:
 ```bash
 cargo yank --vers 0.1.0 --undo
+```
 ```
