@@ -35,12 +35,23 @@ impl KokoroEngine {
 
         // WIRING STEP 3: Initialize the ORT ONNX Session
         println!("  -> [Ort] Loading ONNX model from {:?}...", model_path);
-        let onnx_session = Session::builder()
+        
+        let mut builder = Session::builder()
             .map_err(|e| anyhow::anyhow!("Ort builder error: {:?}", e))?
             .with_optimization_level(GraphOptimizationLevel::Level3)
             .map_err(|e| anyhow::anyhow!("Ort optimization error: {:?}", e))?
             .with_intra_threads(4)
-            .map_err(|e| anyhow::anyhow!("Ort thread error: {:?}", e))?
+            .map_err(|e| anyhow::anyhow!("Ort thread error: {:?}", e))?;
+
+        #[cfg(feature = "mac-acceleration")]
+        {
+            println!("  -> [Ort] Registering CoreML Execution Provider...");
+            builder = builder
+                .with_execution_providers([ort::execution_providers::CoreMLExecutionProvider::default().build()])
+                .map_err(|e| anyhow::anyhow!("Failed to register CoreML: {:?}", e))?;
+        }
+
+        let onnx_session = builder
             .commit_from_file(&model_path)
             .map_err(|e| anyhow::anyhow!("Failed to load model.onnx: {:?}", e))?;
 

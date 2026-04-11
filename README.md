@@ -12,6 +12,13 @@ You can easily install the CLI globally using `cargo` from crates.io:
 cargo install kokoro-cli
 ```
 
+**For Apple Silicon (M1/M2/M3/M4) users:**
+You can enable native CoreML hardware acceleration by installing with the `mac-acceleration` feature flag:
+
+```bash
+cargo install kokoro-cli --features mac-acceleration
+```
+
 ## Prerequisites
 
 This CLI adheres strictly to XDG Base Directory specifications. The application expects the models to be located in `~/.local/share/kokoro/models/v1.0`.
