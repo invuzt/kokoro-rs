@@ -73,6 +73,11 @@ impl KokoroEngine {
         let (phonemes, _) = self.g2p.g2p(text).map_err(|e| anyhow::anyhow!("G2P error: {:?}", e))?;
         println!("  -> [Misaki-rs] Phonemes: {}", phonemes);
         
+        self.generate_audio_from_phonemes(&phonemes, voice_id, speed, verbose)
+    }
+
+    /// Generates raw float32 audio samples directly from raw phonemes.
+    pub fn generate_audio_from_phonemes(&mut self, phonemes: &str, voice_id: u32, speed: f32, verbose: bool) -> Result<Vec<f32>> {
         // STEP 2: Map phonemes to integer tokens using our vocabulary
         // Kokoro sequences must begin and end with 0 (which acts as BOS/EOS/PAD)
         let mut token_ids: Vec<i64> = Vec::with_capacity(phonemes.chars().count() + 2);
@@ -83,7 +88,12 @@ impl KokoroEngine {
             }
         }
         token_ids.push(0); // EOS
-        
+
+        self.generate_audio_from_tokens(token_ids, voice_id, speed, verbose)
+    }
+
+    /// Generates raw float32 audio samples from token IDs.
+    pub fn generate_audio_from_tokens(&mut self, token_ids: Vec<i64>, voice_id: u32, speed: f32, verbose: bool) -> Result<Vec<f32>> {
         let token_len = token_ids.len();
 
         // STEP 3: Extract the specific Voice Embedding tensor from voices.bin

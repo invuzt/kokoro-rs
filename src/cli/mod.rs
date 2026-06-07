@@ -64,6 +64,10 @@ pub struct SpeakArgs {
     #[arg(short, long, default_value = "output.wav")]
     pub out: String,
 
+    /// Treat the input text as a raw phoneme string, bypassing G2P conversion
+    #[arg(short, long, default_value_t = false)]
+    pub phonemes: bool,
+
     /// Show verbose output (includes native hardware execution warnings)
     #[arg(long, default_value_t = false)]
     pub verbose: bool,
@@ -236,8 +240,11 @@ pub fn handle_speak(args: &SpeakArgs) -> Result<(), String> {
 
     println!("\x1b[34mGenerating audio for voice ID {}...\x1b[0m", voice_id);
     
-    let audio_samples = engine.generate_audio(&args.text, voice_id, args.speed, args.verbose)
-        .map_err(|e| format!("Failed to generate audio: {}", e))?;
+    let audio_samples = if args.phonemes {
+        engine.generate_audio_from_phonemes(&args.text, voice_id, args.speed, args.verbose)
+    } else {
+        engine.generate_audio(&args.text, voice_id, args.speed, args.verbose)
+    }.map_err(|e| format!("Failed to generate audio: {}", e))?;
 
     // Create a valid WAV file using `hound`
     let spec = hound::WavSpec {
