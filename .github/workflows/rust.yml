@@ -1,0 +1,32 @@
+name: Build for Termux
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+
+      - name: Install Zig
+        uses: mlugg/setup-zig@v1
+
+      - name: Install cargo-zigbuild
+        run: pip3 install cargo-zigbuild
+
+      - name: Build for Android/Termux
+        # Kita menggunakan target aarch64-linux-android
+        run: cargo zigbuild --release --target aarch64-linux-android
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kokoro-cli-termux
+          path: target/aarch64-linux-android/release/kokoro-cli
