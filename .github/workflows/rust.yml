@@ -39,7 +39,15 @@ jobs:
 
       # 5. Build
       - name: Build for Android/Termux
-        run: cargo zigbuild --release --target aarch64-linux-android
+        run: |
+          # Dapatkan path sistem target dari zig
+          TARGET_TRIPLE=aarch64-linux-android
+          # Mengatur argumen tambahan agar bindgen menemukan stdio.h
+          export BINDGEN_EXTRA_CLANG_ARGS="--sysroot=$(zig env | grep -o '/.*' | head -n1)/lib/libc/include"
+          
+          # Jalankan build
+          cargo zigbuild --release --target $TARGET_TRIPLE
+
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
