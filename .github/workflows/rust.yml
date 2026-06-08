@@ -38,6 +38,29 @@ jobs:
         run: pip3 install cargo-zigbuild
 
       # 5. Build dengan BINDGEN_EXTRA_CLANG_ARGS yang benar
+      - name: Build for Android/Termux
+        run: |
+          # Dapatkan path sysroot dari zig
+          ZIG_PATH=$(echo $PWD/zig-linux-x86_64-0.13.0/zig)
+          # Menggunakan target aarch64-linux-android24
+          SYSROOT=$($ZIG_PATH libc --target aarch64-linux-android24 | grep -o '/.*' | head -n1)
+          
+          # Eksport argumen untuk bindgen
+          # Kita menambahkan path include manual ke sysroot
+          export BINDGEN_EXTRA_CLANG_ARGS="--sysroot=$SYSROOT -I$SYSROOT/usr/include"
+          
+          # Jalankan build
+          cargo zigbuild --release --target aarch64-linux-android
+          
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kokoro-cli-termux
+          path: target/aarch64-linux-android/release/kokoro-cli
+      - name: Install cargo-zigbuild
+        run: pip3 install cargo-zigbuild
+
+      # 5. Build dengan BINDGEN_EXTRA_CLANG_ARGS yang benar
       # Kita arahkan langsung ke header NDK yang disediakan oleh Zig
       - name: Build for Android/Termux
         run: |
