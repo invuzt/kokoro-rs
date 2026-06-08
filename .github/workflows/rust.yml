@@ -10,19 +10,35 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # 1. Setup Cache untuk Cargo
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
+      # 2. Install Zig secara manual (Lebih stabil daripada action pihak ketiga)
+      - name: Install Zig
+        run: |
+          wget https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz
+          tar -xf zig-linux-x86_64-0.13.0.tar.xz
+          echo "$PWD/zig-linux-x86_64-0.13.0" >> $GITHUB_PATH
+
+      # 3. Setup Rust toolchain
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android
 
-      - name: Install Zig
-        uses: mlugg/setup-zig@v1
-
+      # 4. Install cargo-zigbuild
       - name: Install cargo-zigbuild
         run: pip3 install cargo-zigbuild
 
+      # 5. Build
       - name: Build for Android/Termux
-        # Kita menggunakan target aarch64-linux-android
         run: cargo zigbuild --release --target aarch64-linux-android
 
       - name: Upload Artifact
