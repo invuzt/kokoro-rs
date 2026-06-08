@@ -10,7 +10,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 1. Setup Cache untuk Cargo
+      # 1. Cache Cargo
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -20,7 +20,7 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      # 2. Install Zig secara manual (Lebih stabil daripada action pihak ketiga)
+      # 2. Install Zig manual (versi stabil)
       - name: Install Zig
         run: |
           wget https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz
@@ -37,18 +37,20 @@ jobs:
       - name: Install cargo-zigbuild
         run: pip3 install cargo-zigbuild
 
-      # 5. Build
+      # 5. Build dengan BINDGEN_EXTRA_CLANG_ARGS yang benar
+      # Kita arahkan langsung ke header NDK yang disediakan oleh Zig
       - name: Build for Android/Termux
         run: |
-          # Dapatkan path sistem target dari zig
-          TARGET_TRIPLE=aarch64-linux-android
-          # Mengatur argumen tambahan agar bindgen menemukan stdio.h
-          export BINDGEN_EXTRA_CLANG_ARGS="--sysroot=$(zig env | grep -o '/.*' | head -n1)/lib/libc/include"
+          # Dapatkan path sysroot dari zig
+          ZIG_PATH=$(echo $PWD/zig-linux-x86_64-0.13.0/zig)
+          SYSROOT=$($ZIG_PATH libc --target aarch64-linux-android24 | grep -o '/.*' | head -n1)
+          
+          # Eksport argumen untuk bindgen
+          export BINDGEN_EXTRA_CLANG_ARGS="--sysroot=$SYSROOT -I$SYSROOT/include"
           
           # Jalankan build
-          cargo zigbuild --release --target $TARGET_TRIPLE
-
-
+          cargo zigbuild --release --target aarch64-linux-android
+          
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
