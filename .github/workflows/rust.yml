@@ -3,6 +3,8 @@ name: Build for Termux
 on:
   push:
     branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   build:
@@ -10,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # 1. Cache Cargo
+      # 1. Cache Cargo untuk mempercepat build selanjutnya
       - name: Cache cargo registry
         uses: actions/cache@v4
         with:
@@ -20,20 +22,47 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      # 2. Install Zig manual (versi stabil)
+      # 2. Install Zig versi 0.13.0 (stabil & support cross-compilation)
       - name: Install Zig
         run: |
           wget https://ziglang.org/download/0.13.0/zig-linux-x86_64-0.13.0.tar.xz
           tar -xf zig-linux-x86_64-0.13.0.tar.xz
           echo "$PWD/zig-linux-x86_64-0.13.0" >> $GITHUB_PATH
 
-      # 3. Setup Rust toolchain
+      # 3. Install Rust toolchain
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: aarch64-linux-android
 
       # 4. Install cargo-zigbuild
+      - name: Install cargo-zigbuild
+        run: pip3 install cargo-zigbuild
+
+      # 5. Build dengan isolasi sysroot untuk menghindari konflik header Ubuntu
+      - name: Build for Android/Termux
+        run: |
+          # Dapatkan path sysroot dari Zig untuk Android API 24
+          ZIG_PATH=$PWD/zig-linux-x86_64-0.13.0/zig
+          SYSROOT=$($ZIG_PATH libc --target aarch64-linux-android24 | grep -o '/.*' | head -n1)
+          
+          # Isolasi Clang agar tidak menggunakan header Ubuntu (/usr/include)
+          # Menggunakan -nostdinc dan mengarahkan ke sysroot Android
+          export BINDGEN_EXTRA_CLANG_ARGS="--sysroot=$SYSROOT -nostdinc -I$SYSROOT/include -I$(clang -print-file-name=include)"
+          
+          # Set flag agar build script espeak-ng mengikuti sysroot yang benar
+          export CFLAGS="--sysroot=$SYSROOT"
+          export LDFLAGS="--sysroot=$SYSROOT"
+          
+          # Eksekusi build
+          cargo zigbuild --release --target aarch64-linux-android
+          
+      # 6. Simpan hasil binary
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kokoro-cli-termux
+          path: target/aarch64-linux-android/release/kokoro-cli
       - name: Install cargo-zigbuild
         run: pip3 install cargo-zigbuild
 
